@@ -1,0 +1,83 @@
+name: Build and Deploy Go App to GKE
+
+on:
+  push:
+    branches: ["master"]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: asia-south1 # TODO: Update your region
+  GAR_NAME: chat-bot # TODO: Update your Artifact Registry repo name
+  GKE_CLUSTER: practice-cluster # TODO: Update your GKE cluster name
+  GKE_ZONE: asia-south1-a # TODO: Update your GKE zone
+  IMAGE_NAME: backend # TODO: Your desired image name
+  DEPLOYMENT_NAME: backend # TODO: Name of the deployment in k8s/deployment.yaml
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. Authenticate to Google Cloud
+      - name: Google Auth
+        id: auth
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+
+      # 2. Configure Docker to authenticate with Artifact Registry
+      - name: Docker Auth
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      # 3. Build the Docker Image
+      # We tag it with the Git SHA for perfect traceability
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+
+      # 4. Push to Artifact Registry
+      - name: Push Docker Image
+        run: |
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  deploy:
+    name: Deploy to GKE
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. Authenticate to Google Cloud (Each job needs its own auth)
+      - name: Google Auth
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+
+      # 2. Get GKE Credentials (updates the runner's kubeconfig)
+      - name: Get GKE Credentials
+        uses: "google-github-actions/get-gke-credentials@v2"
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GKE_ZONE }}
+
+      # 3. Update the Kubernetes Manifest & Apply
+      # We use 'sed' to replace the placeholder image with the specific SHA tag we just built
+      - name: Deploy
+        run: |
+          IMAGE_TAG=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          sed -i "s|image: .*|image: $IMAGE_TAG|g" k8s/deployment.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }}

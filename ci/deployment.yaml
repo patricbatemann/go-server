@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-go
+spec:
+  replicas: 2 # Standard practice: run at least 2 for high availability
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: go-api
+          image: asia-south1-docker.pkg.dev/boxwood-mantra-462708-c4/chat-bot/backend
+          ports:
+            - containerPort: 5000 # The port your Go server listens on
+          env:
+            - name: JWT_SECRET
+              value: "Throughout heaven and earth, only I am the honoured one."
+            - name: FRONTEND_URL
+              value: "http://34.180.49.123"
+            - name: GOOGLE_CLIENT_ID
+              value: "790018808271-oq5ug76ep1gqqbsbcstn8tnbbi2b30is.apps.googleusercontent.com"
+            - name: GOOGLE_CLIENT_SECRET
+              value: "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"
+            - name: GOOGLE_REDIRECT_URL
+              value: "http://34.180.49.123.nip.io/api/auth/google/callback"
+            - name: MICROSOFT_CLIENT_ID
+              value: "3f1955d7-b712-4201-8f9a-df15afa88392"
+            - name: MICROSOFT_CLIENT_SECRET
+              value: "8~.8Q~ot3849F21rPreq6fEteRlILvBdq_blNaZU"
+            - name: MICROSOFT_REDIRECT_URL
+              value: "http://34.100.194.112.nip.io/auth/microsoft/callback"
+            - name: "GEMINI_API_KEY"
+              value: "AIzaSyBuKvjr3dvpOy2_e-iXYZdzVOdW00o498o"
+            - name: SUPABASE_URL
+              value: "https://elikugnngbdjfopymsez.supabase.co"
+            - name: SUPABASE_KEY
+              value: "sb_publishable_wlXIeMQNDKNMSeLdpE1OmA_ioo7dOgA"
