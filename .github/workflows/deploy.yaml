@@ -2,8 +2,8 @@ name: Build and Deploy Go App to GKE
 
 on:
   push:
-    branches: ["master"]
-  # Allows you to run this workflow manually from the Actions tab
+    tags:
+      - "v*"
   workflow_dispatch:
 
 env:
@@ -42,12 +42,12 @@ jobs:
       # We tag it with the Git SHA for perfect traceability
       - name: Build Docker Image
         run: |
-          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_NAME }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }} .
 
       # 4. Push to Artifact Registry
       - name: Push Docker Image
         run: |
-          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_NAME }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
 
   deploy:
     name: Deploy to GKE
@@ -77,7 +77,7 @@ jobs:
       # We use 'sed' to replace the placeholder image with the specific SHA tag we just built
       - name: Deploy
         run: |
-          IMAGE_TAG=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          sed -i "s|image: .*|image: $IMAGE_TAG|g" k8s/deployment.yaml
-          kubectl apply -f k8s/deployment.yaml
+          IMAGE_TAG=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_NAME }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+          sed -i "s|image: .*|image: $IMAGE_TAG|g" ci/deployment.yaml
+          kubectl apply -f ci/deployment.yaml
           kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }}
