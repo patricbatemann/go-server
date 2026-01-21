@@ -7,12 +7,12 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: asia-south1 # TODO: Update your region
-  GAR_NAME: chat-bot # TODO: Update your Artifact Registry repo name
-  GKE_CLUSTER: practice-cluster # TODO: Update your GKE cluster name
-  GKE_ZONE: asia-south1-a # TODO: Update your GKE zone
-  IMAGE_NAME: backend # TODO: Your desired image name
+  PROJECT_ID: ${{ secrets.GCP_PROJECT }}
+  REGION: asia-south1
+  GAR_NAME: chat-bot
+  GKE_CLUSTER: practice-cluster
+  GKE_ZONE: asia-south1-a
+  IMAGE_NAME: backend
   DEPLOYMENT_NAME: backend # TODO: Name of the deployment in k8s/deployment.yaml
 
 jobs:
