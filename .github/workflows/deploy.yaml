@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT }}
+  PROJECT_ID: boxwood-mantra-462708-c4
   REGION: asia-south1
   GAR_NAME: chat-bot
   GKE_CLUSTER: practice-cluster
