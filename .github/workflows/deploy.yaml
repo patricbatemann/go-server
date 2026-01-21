@@ -13,7 +13,7 @@ env:
   GKE_CLUSTER: practice-cluster
   GKE_ZONE: asia-south1-a
   IMAGE_NAME: backend
-  DEPLOYMENT_NAME: backend # TODO: Name of the deployment in k8s/deployment.yaml
+  DEPLOYMENT_NAME: backend-go
 
 jobs:
   build-and-push:
