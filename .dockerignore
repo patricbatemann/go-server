@@ -1,0 +1,14 @@
+# Git
+.git
+.gitignore
+
+# Build
+bin/
+vendor/
+
+# Environment
+.env
+
+# Temporary
+tmp/
+*.swp
